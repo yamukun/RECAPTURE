@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>recapture</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+        .recapture-container {
+            width: 350px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s ease-in-out;
+            position: relative;
+            margin-top: 50px;
+        }
+        .recapture-container.shake {
+            animation: shake 0.2s ease-in-out 2;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .recapture-header {
+            background-color: #4285f4;
+            color: white;
+            height: 70px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .recapture-image {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin: 5px 0;
+            width: 100%;
+        }
+        .recapture-image div {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+        }
+        .recapture-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+            display: block;
+        }
+        .recapture-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+        .recapture-icons {
+            display: flex;
+            gap: 10px;
+            padding-left: 10px;
+
+            opacity: 0.6;
+        
+        }
+        .recapture-icons img {
+            width: 20px;
+            height: 20px;
+        }
+        .recapture-submit {
+            padding: 12px 22px;
+            font-size: 18px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            padding: 10px;
+        }
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 4px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+        .progress-dot.active {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="recapture-container" id="recapture-box">
+        <div class="recapture-header">Select all images with <b>cars</b></div>
+        <div class="recapture-image" id="recapture-grid">
+            <!-- 9 images will be inserted here -->
+        </div>
+        <div class="recapture-footer">
+            <div class="recapture-icons">
+                <img src="images/01.svg" alt="Reload" id="reload-icon">
+                <img src="images/02.svg" alt="Audio">
+                <img src="images/03.svg" alt="Info">
+            </div>
+            <button class="recapture-submit" id="verify-button">VERIFY</button>
+        </div>
+    </div>
+    <div class="progress-indicator">
+        <div class="progress-dot"></div>
+        <div class="progress-dot"></div>
+        <div class="progress-dot active"></div>
+    </div>
+    <script>
+        const gridContainer = document.getElementById('recapture-grid');
+        const submitButton = document.getElementById('verify-button');
+        const recaptureBox = document.getElementById('recapture-box');
+        let reloadClickCount = 0;
+        let selected = new Set();
+
+        for (let i = 1; i <= 9; i++) {
+            const container = document.createElement('div');
+            container.dataset.index = i;
+            
+            const img = document.createElement('img');
+            img.src = `images/${String(i).padStart(2, '0')}index2.jpg`;
+            img.dataset.index = i;
+            
+            img.onerror = () => {
+                img.style.display = "none";
+                container.textContent = "?";
+            };
+            
+            img.addEventListener('click', () => {
+                if (selected.has(img.dataset.index)) {
+                    selected.delete(img.dataset.index);
+                    img.style.opacity = 1;
+                } else {
+                    selected.add(img.dataset.index);
+                    img.style.opacity = 0.5;
+                }
+                reloadClickCount = 0;
+            });
+            
+            container.appendChild(img);
+            gridContainer.appendChild(container);
+        }
+
+        submitButton.addEventListener('click', () => {
+            reloadClickCount = 0;
+            recaptureBox.classList.add('shake');
+            setTimeout(() => recaptureBox.classList.remove('shake'), 400);
+        });
+
+        const reloadIcon = document.getElementById("reload-icon");
+        reloadIcon.addEventListener("click", () => {
+            reloadClickCount++;
+            if (reloadClickCount >= 8) {
+                window.location.href = 'index4.html';
+            }
+        });
+    </script>
+</body>
+</html>
