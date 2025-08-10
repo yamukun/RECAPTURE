@@ -68,12 +68,18 @@
             color: #666;
         }
         .recapture-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            cursor: pointer;
-            display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        cursor: pointer;
+        display: block;
+        transition: transform 120ms ease, opacity 120ms ease; /* ← アニメ */
+        transform-origin: center center;
         }
+#recapture-grid img { transition: transform .12s ease, opacity .12s ease; }
+#recapture-grid img.is-selected { opacity: .55; transform: scale(.92); }
+
+
         .recapture-footer {
             display: flex;
             justify-content: space-between;
@@ -118,11 +124,60 @@
         .progress-dot.active {
             background-color: #666;
         }
+
+        .verifying-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.verifying-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.verifying-card {
+  min-width: 200px;
+  padding: 20px 24px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.verifying-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.verifying-step {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
     </style>
 </head>
 <body>
+    <!-- 認証ステップ表示オーバーレイ -->
+<div class="verifying-overlay" id="verifying">
+  <div class="verifying-card">
+    <div class="verifying-title">Verifying…</div>
+    <div class="verifying-step" id="verify-step">01/03</div>
+  </div>
+</div>
+
     <div class="recapture-container" id="recapture-box">
-        <div class="recapture-header">Select all images with <b>cars</b></div>
+        <div class="recapture-header">Select all images with your friend<br>00:17~00:23</div>
         <div class="recapture-image" id="recapture-grid">
             <!-- 9 images will be inserted here -->
         </div>
@@ -132,7 +187,7 @@
                 <img src="images/02.svg" alt="Audio">
                 <img src="images/03.svg" alt="Info">
             </div>
-            <button class="recapture-submit" id="verify-button">VERIFY</button>
+            <button class="recapture-submit" id="verify-button">CAPTURE</button>
         </div>
     </div>
     <div class="progress-indicator">
@@ -140,48 +195,66 @@
         <div class="progress-dot"></div>
         <div class="progress-dot"></div>
     </div>
-    <script>
-        const gridContainer = document.getElementById('recapture-grid');
-        const submitButton = document.getElementById('verify-button');
-        const recaptureBox = document.getElementById('recapture-box');
-        let selected = new Set();
+<script>
+  const gridContainer = document.getElementById('recapture-grid');
+  const submitButton  = document.getElementById('verify-button');
+  const recaptureBox  = document.getElementById('recapture-box');
+  const reloadIcon    = document.querySelector('.recapture-icons img[alt="Reload"]');
+  const selected = new Set();
 
-        for (let i = 1; i <= 9; i++) {
-            const container = document.createElement('div');
-            container.dataset.index = i;
-            
-            const img = document.createElement('img');
-            img.src = `images/${String(i).padStart(2, '0')}index1.jpg`;
-            img.dataset.index = i;
-            
-            img.onerror = () => {
-                img.style.display = "none";
-                container.textContent = "?";
-            };
-            
-            img.addEventListener('click', () => {
-                if (selected.has(img.dataset.index)) {
-                    selected.delete(img.dataset.index);
-                    img.style.opacity = 1;
-                } else {
-                    selected.add(img.dataset.index);
-                    img.style.opacity = 0.5;
-                }
-            });
-            
-            container.appendChild(img);
-            gridContainer.appendChild(container);
-        }
+  // 画像9枚
+  for (let i = 1; i <= 9; i++) {
+    const container = document.createElement('div');
+    const img = document.createElement('img');
+    img.src = `images/${String(i).padStart(2, '0')}index1.jpg`;
+    img.dataset.index = String(i);
+    img.onerror = () => { img.style.display = "none"; container.textContent = "?"; };
+    img.addEventListener('click', () => {
+      const idx = Number(img.dataset.index);
+      const on = img.classList.toggle('is-selected');
+      if (on) selected.add(idx); else selected.delete(idx);
+    });
+    container.appendChild(img);
+    gridContainer.appendChild(container);
+  }
 
-        submitButton.addEventListener('click', () => {
-            const correctSelection = new Set(['1', '2', '3', '6', '9']);
-            if (selected.size === correctSelection.size && [...selected].every(idx => correctSelection.has(idx))) {
-                window.location.href = 'index2.html';
-            } else {
-                recaptureBox.classList.add('shake');
-                setTimeout(() => recaptureBox.classList.remove('shake'), 400);
-            }
-        });
-    </script>
+  // Reload
+  if (reloadIcon) {
+    reloadIcon.style.cursor = 'pointer';
+    reloadIcon.addEventListener('click', () => {
+      selected.clear();
+      document.querySelectorAll('#recapture-grid img').forEach(img => {
+        img.classList.remove('is-selected');
+        img.style.removeProperty('opacity');
+        img.style.removeProperty('transform');
+      });
+      recaptureBox.classList.remove('shake');
+    });
+  }
+
+  // フェード→遷移
+  function showStepAndGo(stepText, nextHref) {
+    const overlay = document.getElementById('verifying');
+    const stepEl  = document.getElementById('verify-step');
+    stepEl.textContent = stepText;        // ← 02/03 を表示
+    overlay.classList.add('show');        // フェードイン
+    setTimeout(() => { window.location.href = nextHref; }, 800);
+  }
+
+  // ✅ VERIFY（これ“だけ”を残す。上の window.location.href 直遷移リスナーは削除）
+  const correctSelection = new Set([2,3, 5, 6, 7, 8, 9]);
+  submitButton.addEventListener('click', () => {
+    const ok = (selected.size === correctSelection.size) &&
+               ([...selected].every(idx => correctSelection.has(idx)));
+    if (ok) {
+      showStepAndGo('01/03', 'index2.html'); // ← 2→3なので 02/03
+    } else {
+      recaptureBox.classList.add('shake');
+      setTimeout(() => recaptureBox.classList.remove('shake'), 800);
+    }
+  });
+</script>
+
+
 </body>
 </html>
