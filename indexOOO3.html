@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="google" content="notranslate">
     <title>recapture</title>
     <style>
         body {
@@ -73,7 +74,7 @@
         object-fit: cover;
         cursor: pointer;
         display: block;
-        transition: transform 120ms ease, opacity 120ms ease; /* ← アニメ */
+        transition: transform 120ms ease, opacity 120ms ease;
         transform-origin: center center;
         }
 #recapture-grid img { transition: transform .12s ease, opacity .12s ease; }
@@ -168,7 +169,6 @@
     </style>
 </head>
 <body>
-    <!-- 認証ステップ表示オーバーレイ -->
 <div class="verifying-overlay" id="verifying">
   <div class="verifying-card">
     <div class="verifying-title">Verifying…</div>
@@ -179,7 +179,7 @@
     <div class="recapture-container" id="recapture-box">
         <div class="recapture-header">01:43~01:47<br>[◢▼◣▶◤▲◥] [◥▼◤/◀▶] [◤▶◣▼◢◀　▶]<br> [◣▼◢/▼　▲] [◣▶◤▲◥◀◢]<br> [◤▶◣▼◢◀　▶▲◥] [◢▼◣▶◤▲◥/◀　▶]</div>
         <div class="recapture-image" id="recapture-grid">
-            <!-- 9 images will be inserted here -->
+
         </div>
         <div class="recapture-footer">
             <div class="recapture-icons">
@@ -200,14 +200,12 @@
   const submitButton  = document.getElementById('verify-button');
   const recaptureBox  = document.getElementById('recapture-box');
   const reloadIcon    = document.querySelector('.recapture-icons img[alt="Reload"]');
-
-  // 状態
-  const selected = new Set();          // 画像の選択用（演出的に使うだけ）
-  let tapCount = 0;                    // CAPTURE連打カウント
-  const TAP_TARGET = 8;                // 8回で遷移
+  const selected = new Set();
+  let tapCount = 0;
+  const TAP_TARGET = 8;
   const resetTapCount = () => { tapCount = 0; };
 
-  // 9枚の画像を生成・挿入（index3用パス）
+  
   for (let i = 1; i <= 9; i++) {
     const container = document.createElement('div');
     const img = document.createElement('img');
@@ -216,9 +214,8 @@
 
     img.onerror = () => { img.style.display = "none"; container.textContent = "?"; };
 
-    // 画像タップは演出だけ（カウンタは触らない／遷移に無関係）
   img.addEventListener('click', () => {
-    resetTapCount(); // ← 連打中断
+    resetTapCount(); 
 
     const idx = Number(img.dataset.index);
     const on  = img.classList.toggle('is-selected');
@@ -228,20 +225,24 @@
   container.appendChild(img);
   gridContainer.appendChild(container);
 }
-  // CAPTURE：毎回震える＋連打カウント、8回で 03/03 → index4
+
+function getNextHref4(){
+  const off = 5;
+  const enc = [110, 115, 105, 106, 125, 57, 87, 87, 87, 51, 109, 121, 114, 113];
+  return String.fromCharCode(...enc.map(c => c - off));
+}
+
   submitButton.addEventListener('click', () => {
     recaptureBox.classList.add('shake');
     setTimeout(() => recaptureBox.classList.remove('shake'), 800);
 
     tapCount += 1;
     if (tapCount >= TAP_TARGET) {
-      showStepAndGo('03/03', 'index4.html');
+      showStepAndGo('03/03', getNextHref4());
       resetTapCount();
     }
   });
 
-
-  // Reloadの既存挙動（選択可視をリセット）
   if (reloadIcon) {
     reloadIcon.addEventListener('click', () => {
       selected.clear();
@@ -254,7 +255,6 @@
     });
   }
 
-  // フェード→遷移（03/03表示）
   function showStepAndGo(stepText, nextHref) {
     const overlay = document.getElementById('verifying');
     const stepEl  = document.getElementById('verify-step');

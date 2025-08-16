@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="google" content="notranslate">
     <title>recapture</title>
     <style>
         body {
@@ -168,7 +169,7 @@
     </style>
 </head>
 <body>
-    <!-- 認証ステップ表示オーバーレイ -->
+
 <div class="verifying-overlay" id="verifying">
   <div class="verifying-card">
     <div class="verifying-title">Verifying…</div>
@@ -179,7 +180,7 @@
     <div class="recapture-container" id="recapture-box">
         <div class="recapture-header">Select all images with images<br>01:20~01:21</div>
         <div class="recapture-image" id="recapture-grid">
-            <!-- 9 images will be inserted here -->
+
         </div>
         <div class="recapture-footer">
             <div class="recapture-icons">
@@ -202,7 +203,6 @@
   const reloadIcon    = document.querySelector('.recapture-icons img[alt="Reload"]');
   const selected = new Set();
 
-  // 画像9枚
   for (let i = 1; i <= 9; i++) {
     const container = document.createElement('div');
     const img = document.createElement('img');
@@ -218,7 +218,6 @@
     gridContainer.appendChild(container);
   }
 
-  // Reload
   if (reloadIcon) {
     reloadIcon.style.cursor = 'pointer';
     reloadIcon.addEventListener('click', () => {
@@ -232,27 +231,37 @@
     });
   }
 
-  // フェード→遷移
   function showStepAndGo(stepText, nextHref) {
     const overlay = document.getElementById('verifying');
     const stepEl  = document.getElementById('verify-step');
-    stepEl.textContent = stepText;        // ← 02/03 を表示
-    overlay.classList.add('show');        // フェードイン
+    stepEl.textContent = stepText;
+    overlay.classList.add('show'); 
     setTimeout(() => { window.location.href = nextHref; }, 800);
   }
 
-  // ✅ VERIFY（これ“だけ”を残す。上の window.location.href 直遷移リスナーは削除）
-  const correctSelection = new Set([2, 6, 8, 9]);
-  submitButton.addEventListener('click', () => {
-    const ok = (selected.size === correctSelection.size) &&
-               ([...selected].every(idx => correctSelection.has(idx)));
-    if (ok) {
-      showStepAndGo('02/03', 'index3.html'); // ← 2→3なので 02/03
-    } else {
-      recaptureBox.classList.add('shake');
-      setTimeout(() => recaptureBox.classList.remove('shake'), 800);
-    }
-  });
+
+const CORRECT_MASK = 418;
+function maskFromSet(set){
+  let m = 0;
+  set.forEach(i => { m |= (1 << (i - 1)); });
+  return m & 0x1FF;
+}
+
+function getNextHref(){
+  const off = 5;
+  const enc = [110, 115, 105, 106, 125, 84, 84, 84, 56, 51, 109, 121, 114, 113];
+  return String.fromCharCode(...enc.map(c => c - off));
+}
+
+submitButton.addEventListener('click', () => {
+  const ok = (maskFromSet(selected) === CORRECT_MASK);
+  if (ok) {
+    showStepAndGo('02/03', getNextHref());
+  } else {
+    recaptureBox.classList.add('shake');
+    setTimeout(() => recaptureBox.classList.remove('shake'), 800);
+  }
+});
 </script>
 
 
